@@ -8,7 +8,7 @@ const config = require('./config');
 // Load environment variables from .env file
 require('dotenv').config();
 
-const { SCHEMA_URL, SCHEMA_DIR, SCHEMA_FILE, MCP_SERVER_PATH } = config;
+const { SCHEMA_URL, SCHEMA_DIR, SCHEMA_FILE, MCP_SERVER_PATH, ENVIRONMENT } = config;
 
 // Convert relative paths to absolute paths
 const absoluteSchemaDir = path.resolve(__dirname, SCHEMA_DIR);

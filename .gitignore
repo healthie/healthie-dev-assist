@@ -78,4 +78,4 @@ out/
 # Misc
 *.bak
 *.orig
-*~
+environments.json

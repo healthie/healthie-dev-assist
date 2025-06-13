@@ -1,0 +1,14 @@
+{
+  "local": {
+    "endpoint": "http://localhost:3000/graphql",
+    "apiKey": "your-local-api-key-here"
+  },
+  "dev": {
+    "endpoint": "https://dev.yourcompany.com/graphql",
+    "apiKey": "your-dev-api-key-here"
+  },
+  "sandbox": {
+    "endpoint": "https://sandbox.yourcompany.com/graphql",
+    "apiKey": "your-sandbox-api-key-here"
+  }
+}

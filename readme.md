@@ -28,6 +28,67 @@ This project provides a bridge between Healthie's comprehensive healthcare API a
 - "Where is a patient's DOB stored?"
 - "Help me create a mutation to update patient data"
 
+## Multi-Environment Support
+
+This tool supports working with multiple environments (local, staging, sandbox, etc.) while maintaining full backwards compatibility for existing users.
+
+### Default Behavior (Backwards Compatible)
+
+If you don't create an `environments.json` file, the tool works exactly as before:
+- Connects to Healthie's staging API
+- Uses optional `HEALTHIE_API_KEY` environment variable
+- Single MCP server configuration
+
+### Adding Additional Environments
+
+1. **Create environments configuration** (optional):
+```bash
+cp environments.example.json environments.json
+```
+
+2. **Edit `environments.json`** with your custom environments:
+```json
+{
+  "local": {
+    "endpoint": "http://localhost:3000/graphql",
+    "apiKey": "your-local-api-key"
+  },
+  "dev": {
+    "endpoint": "https://dev.yourcompany.com/graphql",
+    "apiKey": "your-dev-api-key"
+  }
+}
+```
+
+3. **Configure multiple MCP servers** in your AI tool:
+```json
+{
+  "mcpServers": {
+    "healthie-dev-assist": {
+      "command": "node",
+      "args": ["/path/to/setup.js"]
+    },
+    "healthie-local": {
+      "command": "node",
+      "args": ["/path/to/setup.js"],
+      "env": { "HEALTHIE_ENV": "local" }
+    },
+    "healthie-dev": {
+      "command": "node",
+      "args": ["/path/to/setup.js"],
+      "env": { "HEALTHIE_ENV": "dev" }
+    }
+  }
+}
+```
+
+4. **Use environment-specific tools**: The AI will see separate tools for each environment and you can specify which one to use:
+   - "Use healthie-dev-assist to query staging"
+   - "Use healthie-local to test this locally"
+   - "Use healthie-dev to check the dev server"
+
+Each environment maintains its own schema file and configuration, allowing you to work across multiple Healthie instances seamlessly.
+
 ## Prerequisites
 
 - Node.js (v14 or higher)
@@ -237,5 +298,3 @@ The apollo-mcp-server binary included here comes from https://github.com/apollog
 For issues and questions:
 - [GitHub Issues](https://github.com/healthie/healthie-dev-assist/issues)
 - [Healthie API Documentation][https://docs.gethealthie.com/guides/intro/]
-
-

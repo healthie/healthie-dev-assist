@@ -9,7 +9,7 @@ const config = require('./config');
 // Load environment variables from .env file
 require('dotenv').config();
 
-const { SCHEMA_URL, SCHEMA_DIR, SCHEMA_FILE, MCP_SERVER_PATH } = config;
+const { SCHEMA_URL, SCHEMA_DIR, SCHEMA_FILE, MCP_SERVER_PATH, API_KEY, ENVIRONMENT } = config;
 
 // Convert relative paths to absolute paths
 const absoluteSchemaFile = path.resolve(__dirname, SCHEMA_FILE);
@@ -53,8 +53,8 @@ class MCPSearchWrapper {
         const args = ['--introspection', '--schema', absoluteSchemaFile, '--endpoint', SCHEMA_URL];
         
         // Add API key header if present
-        if (process.env.HEALTHIE_API_KEY) {
-            args.push('--header', `authorization: Basic ${process.env.HEALTHIE_API_KEY}`);
+        if (API_KEY) {
+            args.push('--header', `authorization: Basic ${API_KEY}`);
             args.push('--header', `AuthorizationSource: API`);
         }
 
@@ -97,9 +97,10 @@ class MCPSearchWrapper {
                         }
                         
                         // Add our search schema tool
+                        const envSuffix = ENVIRONMENT !== 'default' ? ` (Environment: ${ENVIRONMENT})` : '';
                         message.result.tools.push({
                             name: 'search_schema',
-                            description: 'Search the GraphQL schema for types, fields, queries, or mutations. ALWAYS USE THIS FIRST when looking for available queries, mutations, or types. This is much more efficient than using introspect to browse the entire schema.',
+                            description: `Search the GraphQL schema for types, fields, queries, or mutations${envSuffix}. ALWAYS USE THIS FIRST when looking for available queries, mutations, or types. This is much more efficient than using introspect to browse the entire schema.`,
                             inputSchema: {
                                 type: 'object',
                                 properties: {
