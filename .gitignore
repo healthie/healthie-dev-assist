@@ -36,6 +36,9 @@ Thumbs.db
 
 schemas/
 
+# Downloaded binaries
+bin/
+
 # Logs
 logs/
 *.log
