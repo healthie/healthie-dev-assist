@@ -4,11 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const config = require('./config');
+const { installApollo } = require('./install-apollo-mcp');
 
 // Load environment variables from .env file
 require('dotenv').config();
 
-const { SCHEMA_URL, SCHEMA_DIR, SCHEMA_FILE, MCP_SERVER_PATH } = config;
+const { SCHEMA_DIR, SCHEMA_FILE } = config;
 
 // Convert relative paths to absolute paths
 const absoluteSchemaDir = path.resolve(__dirname, SCHEMA_DIR);
@@ -19,24 +20,35 @@ if (!fs.existsSync(absoluteSchemaDir)) {
     fs.mkdirSync(absoluteSchemaDir, { recursive: true });
 }
 
-// Check if schema file exists
-if (!fs.existsSync(absoluteSchemaFile)) {
-    
-    // Use the regenerate-schema script
-    const regenerate = spawn('node', [path.resolve(__dirname, 'regenerate-schema.js')], { 
-        stdio: 'inherit',
-        cwd: __dirname
-    });
-    
-    regenerate.on('close', (code) => {
-        if (code !== 0) {
-            process.exit(1);
+// Install Apollo MCP Server and start
+async function main() {
+    try {
+        await installApollo();
+        
+        // Check if schema file exists
+        if (!fs.existsSync(absoluteSchemaFile)) {
+            // Use the regenerate-schema script
+            const regenerate = spawn('node', [path.resolve(__dirname, 'regenerate-schema.js')], { 
+                stdio: 'inherit',
+                cwd: __dirname
+            });
+            
+            regenerate.on('close', (code) => {
+                if (code !== 0) {
+                    process.exit(1);
+                }
+                startMCPWithSearch();
+            });
+        } else {
+            startMCPWithSearch();
         }
-        startMCPWithSearch();
-    });
-} else {
-    startMCPWithSearch();
+    } catch (error) {
+        console.error('Setup failed:', error.message);
+        process.exit(1);
+    }
 }
+
+main();
 
 function startMCPWithSearch() {
     // Start the MCP wrapper with search functionality
