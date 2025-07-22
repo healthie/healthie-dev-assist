@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const config = require('./config');
-const { installApollo } = require('./install-apollo-mcp');
 
 // Load environment variables from .env file
 require('dotenv').config();
@@ -20,35 +19,36 @@ if (!fs.existsSync(absoluteSchemaDir)) {
     fs.mkdirSync(absoluteSchemaDir, { recursive: true });
 }
 
-// Install Apollo MCP Server and start
-async function main() {
-    try {
-        await installApollo();
-        
-        // Check if schema file exists
-        if (!fs.existsSync(absoluteSchemaFile)) {
-            // Use the regenerate-schema script
-            const regenerate = spawn('node', [path.resolve(__dirname, 'regenerate-schema.js')], { 
-                stdio: 'inherit',
-                cwd: __dirname
-            });
-            
-            regenerate.on('close', (code) => {
-                if (code !== 0) {
-                    process.exit(1);
-                }
-                startMCPWithSearch();
-            });
-        } else {
-            startMCPWithSearch();
-        }
-    } catch (error) {
-        console.error('Setup failed:', error.message);
+// Install Apollo MCP Server
+const install = spawn('node', [path.resolve(__dirname, 'install-apollo-mcp.js')], { 
+    stdio: ['inherit', 'pipe', 'inherit'],
+    cwd: __dirname
+});
+
+install.on('close', (installCode) => {
+    if (installCode !== 0) {
         process.exit(1);
     }
-}
-
-main();
+    
+    // Check if schema file exists
+    if (!fs.existsSync(absoluteSchemaFile)) {
+        
+        // Use the regenerate-schema script
+        const regenerate = spawn('node', [path.resolve(__dirname, 'regenerate-schema.js')], { 
+            stdio: ['inherit', 'pipe', 'inherit'],
+            cwd: __dirname
+        });
+        
+        regenerate.on('close', (code) => {
+            if (code !== 0) {
+                process.exit(1);
+            }
+            startMCPWithSearch();
+        });
+    } else {
+        startMCPWithSearch();
+    }
+});
 
 function startMCPWithSearch() {
     // Start the MCP wrapper with search functionality
