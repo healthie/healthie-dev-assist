@@ -79,3 +79,6 @@ out/
 *.bak
 *.orig
 *~
+
+# DXT archives
+*.dxt

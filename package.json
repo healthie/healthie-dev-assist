@@ -4,6 +4,7 @@
   "description": "Development assistant for Healthie GraphQL API",
   "scripts": {
     "start": "node setup.js",
+    "pack": "npx @anthropic-ai/dxt pack",
     "regenerate-schema": "node regenerate-schema.js",
     "postinstall": "echo '✓ Dependencies installed. Run npm run setup to start the MCP server.'"
   },

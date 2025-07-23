@@ -1,0 +1,59 @@
+{
+  "dxt_version": "0.1",
+  "name": "healthie-dev-assist",
+  "display_name": "Healthie Dev Assistant",
+  "version": "1.0.0",
+  "description": "Development assistant for Healthie GraphQL API",
+  "author": {
+    "name": "Healthie"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/healthie/healthie-dev-assist"
+  },
+  "homepage": "https://www.gethealthie.com/",
+  "documentation": "https://github.com/healthie/healthie-dev-assist",
+  "support": "https://github.com/healthie/healthie-dev-assist/issues",
+  "keywords": ["api", "productivity"],
+  "server": {
+    "type": "node",
+    "entry_point": "setup.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/setup.js"],
+      "env": {
+        "HEALTHIE_API_KEY": "${api_key}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "execute",
+      "description": "Execute a GraphQL operation against Healthie's API"
+    },
+    {
+      "name": "introspect",
+      "description": "Get detailed information about types from the GraphQL schema"
+    },
+    {
+      "name": "search_schema",
+      "description": "Search the GraphQL schema for types, fields, queries, or mutations"
+    }
+  ],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Your API key for authentication",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=14.0.0"
+    }
+  },
+  "license": ""
+}
