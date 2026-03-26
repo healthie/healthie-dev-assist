@@ -235,7 +235,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 async function main() {
   // Remove sensitive env vars after config loads — limits sandbox escape blast radius.
   // config.ts already captured everything it needs.
-  const sensitiveKeys = ["HEALTHIE_API_KEY", "ENVIRONMENTS_FILE"];
+  const sensitiveKeys = ["HEALTHIE_API_KEY", "HEALTHIE_AUTHORIZATION_SHARD", "ENVIRONMENTS_FILE"];
   sensitiveKeys.forEach(k => delete process.env[k]);
 
   await ensureSchema();

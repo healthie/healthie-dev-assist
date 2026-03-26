@@ -13,6 +13,8 @@ export interface EnvConfig {
   apiKey: string;
   schemaPath: string;
   envName: string;
+  /** Shard authorization ID — required only if your data is in a shard environment */
+  authorizationShard?: string;
 }
 
 const API_URLS: Record<string, string> = {
@@ -38,6 +40,7 @@ function loadConfig(): EnvConfig {
         apiKey: envEntry.apiKey,
         schemaPath,
         envName,
+        authorizationShard: envEntry.authorizationShard || undefined,
       };
     }
   }
@@ -46,6 +49,7 @@ function loadConfig(): EnvConfig {
   // API key is optional — schema search/introspect work without it.
   // query() and mutate() will throw at call time if the key is missing.
   const apiKey = process.env.HEALTHIE_API_KEY ?? "";
+  const authorizationShard = process.env.HEALTHIE_AUTHORIZATION_SHARD || undefined;
 
   const apiUrl = API_URLS[envName];
   if (!apiUrl) {
@@ -54,7 +58,7 @@ function loadConfig(): EnvConfig {
     );
   }
 
-  return { apiUrl, apiKey, schemaPath, envName };
+  return { apiUrl, apiKey, schemaPath, envName, authorizationShard };
 }
 
 export const config = loadConfig();
