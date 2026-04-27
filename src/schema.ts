@@ -77,12 +77,17 @@ export function invalidateCache(): void {
 export async function regenerateSchema(): Promise<{ lines: number; path: string }> {
   const introspectionQuery = getIntrospectionQuery();
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Basic ${config.apiKey}`,
+  };
+  if (config.authorizationShard) {
+    headers["AuthorizationShard"] = config.authorizationShard;
+  }
+
   const response = await fetch(config.apiUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${config.apiKey}`,
-    },
+    headers,
     body: JSON.stringify({ query: introspectionQuery }),
   });
 

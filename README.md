@@ -86,6 +86,11 @@ HEALTHIE_API_KEY=your-api-key-here
 
 > Schema search and introspection work without a key. `query` and `mutate` require one.
 
+**Shard environments:** If your data is hosted in a Healthie shard environment, also set:
+```
+HEALTHIE_AUTHORIZATION_SHARD=your-shard-id
+```
+
 ### 3. Download the schema
 
 ```bash
@@ -198,7 +203,8 @@ Edit `environments.json`:
 {
   "staging": {
     "apiUrl": "https://staging-api.gethealthie.com/graphql",
-    "apiKey": "your-staging-key"
+    "apiKey": "your-staging-key",
+    "authorizationShard": "optional-shard-id"
   }
 }
 ```
