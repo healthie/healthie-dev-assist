@@ -1,5 +1,5 @@
 import vm from "vm";
-import { healthieApi } from "./api.js";
+import { createHealthieApi } from "./api.js";
 
 const TIMEOUT_MS = 30_000;
 
@@ -23,9 +23,10 @@ export interface SandboxResult {
  */
 export async function executeInSandbox(code: string): Promise<SandboxResult> {
   const logs: string[] = [];
+  const controller = new AbortController();
 
   const sandbox = {
-    healthie: healthieApi,
+    healthie: createHealthieApi(controller.signal),
     console: {
       log: (...args: unknown[]) => logs.push(args.map(stringify).join(" ")),
       error: (...args: unknown[]) =>
@@ -70,6 +71,8 @@ export async function executeInSandbox(code: string): Promise<SandboxResult> {
 })()
 `.trim();
 
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
   try {
     const script = new vm.Script(wrapped, {
       filename: "execute_healthie_code",
@@ -83,9 +86,12 @@ export async function executeInSandbox(code: string): Promise<SandboxResult> {
 
     const result = await Promise.race([
       resultPromise,
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Execution timed out after 30s")), TIMEOUT_MS)
-      ),
+      new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          controller.abort();
+          reject(new Error("Execution timed out after 30s"));
+        }, TIMEOUT_MS);
+      }),
     ]);
 
     return {
@@ -98,6 +104,9 @@ export async function executeInSandbox(code: string): Promise<SandboxResult> {
       success: false,
       error: logs.length > 0 ? `${message}\n\nConsole output:\n${logs.join("\n")}` : message,
     };
+  } finally {
+    clearTimeout(timeoutHandle);
+    controller.abort();
   }
 }
 

@@ -228,6 +228,60 @@ await test("Missing API key gives clear error on query/mutate", async () => {
   }
 });
 
+// AbortController — signal threading and cleanup
+console.log("\nAbortController: signal threading and cleanup:");
+
+await test("Abort signal is passed to fetch and aborted after sandbox completes", async () => {
+  const capturedSignals: AbortSignal[] = [];
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (_url: unknown, init?: { signal?: AbortSignal }) => {
+    if (init?.signal) capturedSignals.push(init.signal);
+    return new Response(JSON.stringify({ data: {} }), { status: 200 });
+  }) as typeof globalThis.fetch;
+
+  try {
+    const result = await executeInSandbox(`
+      healthie.query("{ __typename }");
+      return "done";
+    `);
+
+    assert(result.success, `Sandbox unexpectedly failed: ${result.error}`);
+    assert(capturedSignals.length > 0, "Expected fetch to be called with a signal");
+    assert(
+      capturedSignals.every((s) => s.aborted),
+      "All fetch signals should be aborted after sandbox exits"
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+await test("Abort signal is aborted even when sandbox throws", async () => {
+  const capturedSignals: AbortSignal[] = [];
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (_url: unknown, init?: { signal?: AbortSignal }) => {
+    if (init?.signal) capturedSignals.push(init.signal);
+    return new Response(JSON.stringify({ data: {} }), { status: 200 });
+  }) as typeof globalThis.fetch;
+
+  try {
+    await executeInSandbox(`
+      healthie.query("{ __typename }");
+      throw new Error("intentional");
+    `);
+
+    assert(capturedSignals.length > 0, "Expected fetch to be called with a signal");
+    assert(
+      capturedSignals.every((s) => s.aborted),
+      "All fetch signals should be aborted even after sandbox error"
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 console.log("\n" + "─".repeat(50));

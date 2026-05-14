@@ -313,7 +313,8 @@ export async function getSchema(): Promise<string> {
 
 async function executeGraphQL<T>(
   operation: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
+  signal?: AbortSignal
 ): Promise<T> {
   if (!config.apiKey) {
     throw new Error(
@@ -336,6 +337,7 @@ async function executeGraphQL<T>(
     method: "POST",
     headers,
     body,
+    signal,
   });
 
   if (!response.ok) {
@@ -372,10 +374,16 @@ export async function mutate<T = unknown>(
 
 // ── Healthie API object (injected into sandbox) ───────────────────────────────
 
-export const healthieApi = {
-  search,
-  introspect,
-  schema: getSchema,
-  query,
-  mutate,
-};
+export function createHealthieApi(signal?: AbortSignal) {
+  return {
+    search,
+    introspect,
+    schema: getSchema,
+    query: <T = unknown>(graphql: string, variables?: Record<string, unknown>) =>
+      executeGraphQL<T>(graphql, variables, signal),
+    mutate: <T = unknown>(graphql: string, variables?: Record<string, unknown>) =>
+      executeGraphQL<T>(graphql, variables, signal),
+  };
+}
+
+export const healthieApi = createHealthieApi();
