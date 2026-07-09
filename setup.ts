@@ -16,7 +16,8 @@ import { homedir } from "os";
 import { execSync } from "child_process";
 
 const projectRoot = resolve(import.meta.dirname);
-const startScriptPath = resolve(projectRoot, "start-mcp.sh");
+const tsxCliPath = resolve(projectRoot, "node_modules", "tsx", "dist", "cli.mjs");
+const serverEntryPath = resolve(projectRoot, "src", "server.ts");
 
 // ── Locate Claude Desktop config ──────────────────────────────────────────────
 
@@ -119,8 +120,14 @@ migrateApiKey();
 // ── Update MCP config entry ──────────────────────────────────────────────────
 
 const existing = mcpServers["healthie-dev-assist"];
+// GUI hosts (e.g. Claude Desktop) run with a minimal PATH and are blocked by
+// macOS from executing a shell script located under ~/Documents ("Operation
+// not permitted"). Invoke an absolute node binary directly against tsx + the
+// source entry instead — this keeps __dirname at the project root (so .env and
+// schemas/ resolve correctly) and avoids both the PATH and script-exec issues.
 mcpServers["healthie-dev-assist"] = {
-  command: startScriptPath,
+  command: process.execPath,
+  args: [tsxCliPath, serverEntryPath],
 };
 
 // Clean up orphaned "healthie" entry (left behind by early v2 setup)

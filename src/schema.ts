@@ -71,6 +71,29 @@ export function invalidateCache(): void {
 }
 
 /**
+ * Recursively null out `defaultValue` on every input field and argument in an
+ * introspection result. Works on a deep clone so the input is left untouched.
+ */
+function stripDefaultValues(data: IntrospectionQuery): IntrospectionQuery {
+  const clone = structuredClone(data);
+  for (const type of clone.__schema.types) {
+    const inputFields = (type as { inputFields?: Array<{ defaultValue?: unknown }> }).inputFields;
+    if (Array.isArray(inputFields)) {
+      for (const field of inputFields) field.defaultValue = null;
+    }
+    const fields = (type as { fields?: Array<{ args?: Array<{ defaultValue?: unknown }> }> }).fields;
+    if (Array.isArray(fields)) {
+      for (const field of fields) {
+        if (Array.isArray(field.args)) {
+          for (const arg of field.args) arg.defaultValue = null;
+        }
+      }
+    }
+  }
+  return clone;
+}
+
+/**
  * Fetch the schema from the live Healthie API via introspection and save it to disk.
  * Invalidates the in-memory cache so subsequent calls use the fresh schema.
  */
@@ -110,8 +133,24 @@ export async function regenerateSchema(): Promise<{ lines: number; path: string 
     throw new Error("No data returned from introspection query");
   }
 
-  const schema = buildClientSchema(json.data);
-  const sdl = printSchema(schema);
+  let sdl: string;
+  try {
+    sdl = printSchema(buildClientSchema(json.data));
+  } catch (err) {
+    // graphql-js' printSchema/astFromValue can't serialize some default values
+    // (e.g. an empty-object `{}` default on a custom-scalar input field), which
+    // throws "Cannot convert value to AST". Default values aren't needed for the
+    // schema-as-reference use case, so strip them and retry.
+    if (err instanceof Error && /convert value to AST/.test(err.message)) {
+      const stripped = stripDefaultValues(json.data);
+      sdl = printSchema(buildClientSchema(stripped));
+      console.warn(
+        "Note: dropped some un-serializable input default values while printing the schema."
+      );
+    } else {
+      throw err;
+    }
+  }
 
   ensureSchemaDirExists();
   writeFileSync(config.schemaPath, sdl, "utf-8");
